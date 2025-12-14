@@ -2,13 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { RoleRoute, RootRedirect, Unauthorized } from "@/components/routing";
 
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-
 import Trips from "./pages/Trips";
 import TripDetail from "./pages/TripDetail";
 import Payments from "./pages/Payments";
@@ -20,77 +20,9 @@ import Documents from "./pages/Documents";
 import Payouts from "./pages/Payouts";
 import AuditLogs from "./pages/AuditLogs";
 
-import { Loader2 } from "lucide-react";
-import { AppRole } from "@/types/database";
-
 const queryClient = new QueryClient();
 
-function FullscreenLoader() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
-}
-
-function ProtectedRoute({
-  children,
-  allow,
-}: {
-  children: React.ReactNode;
-  allow?: AppRole[];
-}) {
-  const { user, loading, roles } = useAuth();
-
-  if (loading) return <FullscreenLoader />;
-
-  if (!user) return <Navigate to="/auth" replace />;
-
-  if (allow?.length) {
-    const ok = allow.some((r) => roles.includes(r));
-    if (!ok) return <Navigate to="/unauthorized" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-function RootRedirect() {
-  const { loading, user, homePath } = useAuth();
-
-  if (loading) return <FullscreenLoader />;
-  if (!user) return <Navigate to="/auth" replace />;
-
-  return <Navigate to={homePath || "/unauthorized"} replace />;
-}
-
-const Unauthorized = () => {
-  const { signOut } = useAuth();
-
-  const handleLogout = async () => {
-    await signOut();
-    window.location.href = '/auth';
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="max-w-md w-full rounded-xl border bg-background p-6">
-        <h1 className="text-xl font-semibold mb-2">Sem permissão</h1>
-        <p className="text-muted-foreground mb-4">
-          Sua conta não tem acesso a esta área. Fale com o administrador para liberar.
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            Sair e fazer login novamente
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
+// Placeholder pages for future implementation
 const DriverPlaceholder = () => (
   <div className="p-6">
     <h1 className="text-xl font-semibold">Painel do Motorista</h1>
@@ -114,121 +46,30 @@ const AppRoutes = () => (
     {/* Auth */}
     <Route path="/auth" element={<Auth />} />
 
-    {/* Root → painel certo (admin/driver/fleet) */}
+    {/* Root → redirect based on primaryRole */}
     <Route path="/" element={<RootRedirect />} />
 
     {/* Unauthorized */}
     <Route path="/unauthorized" element={<Unauthorized />} />
 
-    {/* ADMIN / STAFF */}
-    <Route
-      path="/admin"
-      element={
-        <ProtectedRoute allow={["ADMIN", "STAFF"]}>
-          <Dashboard />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/trips"
-      element={
-        <ProtectedRoute allow={["ADMIN", "STAFF"]}>
-          <Trips />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/trips/:id"
-      element={
-        <ProtectedRoute allow={["ADMIN", "STAFF"]}>
-          <TripDetail />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/payments"
-      element={
-        <ProtectedRoute allow={["ADMIN", "STAFF"]}>
-          <Payments />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/drivers"
-      element={
-        <ProtectedRoute allow={["ADMIN", "STAFF"]}>
-          <Drivers />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/drivers/:id"
-      element={
-        <ProtectedRoute allow={["ADMIN", "STAFF"]}>
-          <DriverDetail />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/fleets"
-      element={
-        <ProtectedRoute allow={["ADMIN", "STAFF"]}>
-          <Fleets />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/fleets/:id"
-      element={
-        <ProtectedRoute allow={["ADMIN", "STAFF"]}>
-          <FleetDetail />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/documents"
-      element={
-        <ProtectedRoute allow={["ADMIN", "STAFF"]}>
-          <Documents />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/payouts"
-      element={
-        <ProtectedRoute allow={["ADMIN", "STAFF"]}>
-          <Payouts />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/admin/audit"
-      element={
-        <ProtectedRoute allow={["ADMIN", "STAFF"]}>
-          <AuditLogs />
-        </ProtectedRoute>
-      }
-    />
+    {/* ADMIN / STAFF routes */}
+    <Route path="/admin" element={<RoleRoute allow={["ADMIN", "STAFF"]}><Dashboard /></RoleRoute>} />
+    <Route path="/admin/trips" element={<RoleRoute allow={["ADMIN", "STAFF"]}><Trips /></RoleRoute>} />
+    <Route path="/admin/trips/:id" element={<RoleRoute allow={["ADMIN", "STAFF"]}><TripDetail /></RoleRoute>} />
+    <Route path="/admin/payments" element={<RoleRoute allow={["ADMIN", "STAFF"]}><Payments /></RoleRoute>} />
+    <Route path="/admin/drivers" element={<RoleRoute allow={["ADMIN", "STAFF"]}><Drivers /></RoleRoute>} />
+    <Route path="/admin/drivers/:id" element={<RoleRoute allow={["ADMIN", "STAFF"]}><DriverDetail /></RoleRoute>} />
+    <Route path="/admin/fleets" element={<RoleRoute allow={["ADMIN", "STAFF"]}><Fleets /></RoleRoute>} />
+    <Route path="/admin/fleets/:id" element={<RoleRoute allow={["ADMIN", "STAFF"]}><FleetDetail /></RoleRoute>} />
+    <Route path="/admin/documents" element={<RoleRoute allow={["ADMIN", "STAFF"]}><Documents /></RoleRoute>} />
+    <Route path="/admin/payouts" element={<RoleRoute allow={["ADMIN", "STAFF"]}><Payouts /></RoleRoute>} />
+    <Route path="/admin/audit" element={<RoleRoute allow={["ADMIN", "STAFF"]}><AuditLogs /></RoleRoute>} />
 
-    {/* DRIVER */}
-    <Route
-      path="/driver"
-      element={
-        <ProtectedRoute allow={["DRIVER"]}>
-          <DriverPlaceholder />
-        </ProtectedRoute>
-      }
-    />
+    {/* DRIVER routes */}
+    <Route path="/driver" element={<RoleRoute allow={["DRIVER"]}><DriverPlaceholder /></RoleRoute>} />
 
-    {/* FLEET */}
-    <Route
-      path="/fleet"
-      element={
-        <ProtectedRoute allow={["FLEET"]}>
-          <FleetPlaceholder />
-        </ProtectedRoute>
-      }
-    />
+    {/* FLEET routes */}
+    <Route path="/fleet" element={<RoleRoute allow={["FLEET"]}><FleetPlaceholder /></RoleRoute>} />
 
     {/* Not Found */}
     <Route path="*" element={<NotFound />} />
