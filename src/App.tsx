@@ -20,17 +20,15 @@ import Documents from "./pages/Documents";
 import Payouts from "./pages/Payouts";
 import AuditLogs from "./pages/AuditLogs";
 
-const queryClient = new QueryClient();
+// Driver pages
+import {
+  DriverAvailableTrips,
+  DriverMyTrips,
+  DriverPayouts as DriverPayoutsPage,
+  DriverDocuments,
+} from "./pages/driver";
 
-// Placeholder pages for future implementation
-const DriverPlaceholder = () => (
-  <div className="p-6">
-    <h1 className="text-xl font-semibold">Painel do Motorista</h1>
-    <p className="text-muted-foreground mt-2">
-      Em construção: Corridas disponíveis, Minhas corridas, Documentos e Faturação.
-    </p>
-  </div>
-);
+const queryClient = new QueryClient();
 
 const FleetPlaceholder = () => (
   <div className="p-6">
@@ -66,7 +64,11 @@ const AppRoutes = () => (
     <Route path="/admin/audit" element={<RoleRoute allow={["ADMIN", "STAFF"]}><AuditLogs /></RoleRoute>} />
 
     {/* DRIVER routes */}
-    <Route path="/driver" element={<RoleRoute allow={["DRIVER"]}><DriverPlaceholder /></RoleRoute>} />
+    <Route path="/driver" element={<RoleRoute allow={["DRIVER"]}><DriverAvailableTrips /></RoleRoute>} />
+    <Route path="/driver/available" element={<RoleRoute allow={["DRIVER"]}><DriverAvailableTrips /></RoleRoute>} />
+    <Route path="/driver/my-trips" element={<RoleRoute allow={["DRIVER"]}><DriverMyTrips /></RoleRoute>} />
+    <Route path="/driver/payouts" element={<RoleRoute allow={["DRIVER"]}><DriverPayoutsPage /></RoleRoute>} />
+    <Route path="/driver/documents" element={<RoleRoute allow={["DRIVER"]}><DriverDocuments /></RoleRoute>} />
 
     {/* FLEET routes */}
     <Route path="/fleet" element={<RoleRoute allow={["FLEET"]}><FleetPlaceholder /></RoleRoute>} />
