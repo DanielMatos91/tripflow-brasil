@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AppRole } from '@/types/database';
@@ -8,6 +8,9 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   roles: AppRole[];
+  primaryRole: AppRole | null;
+  homePath: string;
+  hasRole: (role: AppRole) => boolean;
   isAdmin: boolean;
   isStaff: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -29,26 +32,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select('role')
       .eq('user_id', userId)
       .eq('status', 'active');
-    
+
     if (!error && data) {
       setRoles(data.map(r => r.role as AppRole));
+    } else {
+      setRoles([]);
     }
   };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserRoles(session.user.id);
-          }, 0);
+          // evita race condition com render
+          setTimeout(() => fetchUserRoles(session.user.id), 0);
         } else {
           setRoles([]);
         }
-        
+
         setLoading(false);
       }
     );
@@ -56,11 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserRoles(session.user.id);
-      }
-      
+
+      if (session?.user) fetchUserRoles(session.user.id);
+
       setLoading(false);
     });
 
@@ -74,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -83,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { name }
       }
     });
+
     return { error: error as Error | null };
   };
 
@@ -94,12 +97,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = roles.includes('ADMIN');
   const isStaff = roles.includes('STAFF');
 
+  const primaryRole = useMemo<AppRole | null>(() => {
+    if (roles.includes('ADMIN')) return 'ADMIN';
+    if (roles.includes('STAFF')) return 'STAFF';
+    if (roles.includes('FLEET')) return 'FLEET';
+    if (roles.includes('DRIVER')) return 'DRIVER';
+    if (roles.includes('CUSTOMER')) return 'CUSTOMER';
+    return null;
+  }, [roles]);
+
+  const homePath = useMemo(() => {
+    if (primaryRole === 'ADMIN' || primaryRole === 'STAFF') return '/admin';
+    if (primaryRole === 'DRIVER') return '/driver';
+    if (primaryRole === 'FLEET') return '/fleet';
+    // CUSTOMER vai ser o site público depois
+    if (primaryRole === 'CUSTOMER') return '/';
+    return '/unauthorized';
+  }, [primaryRole]);
+
+  const hasRole = (role: AppRole) => roles.includes(role);
+
   return (
     <AuthContext.Provider value={{
       user,
       session,
       loading,
       roles,
+      primaryRole,
+      homePath,
+      hasRole,
       isAdmin,
       isStaff,
       signIn,
