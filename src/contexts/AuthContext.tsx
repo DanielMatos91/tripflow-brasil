@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AppRole } from '@/types/database';
@@ -20,15 +20,40 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Role priority order
+const ROLE_PRIORITY: AppRole[] = ['ADMIN', 'STAFF', 'FLEET', 'DRIVER', 'CUSTOMER'];
+
+function getPrimaryRole(roles: AppRole[]): AppRole | null {
+  for (const role of ROLE_PRIORITY) {
+    if (roles.includes(role)) return role;
+  }
+  return null;
+}
+
+function getHomePath(primaryRole: AppRole | null): string {
+  switch (primaryRole) {
+    case 'ADMIN':
+    case 'STAFF':
+      return '/admin';
+    case 'DRIVER':
+      return '/driver';
+    case 'FLEET':
+      return '/fleet';
+    case 'CUSTOMER':
+      return '/';
+    default:
+      return '/unauthorized';
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [rolesLoading, setRolesLoading] = useState(true);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
-  const fetchUserRoles = async (userId: string) => {
-    setRolesLoading(true);
+  const fetchUserRoles = useCallback(async (userId: string): Promise<AppRole[]> => {
     try {
       const { data, error } = await supabase
         .from('user_roles')
@@ -36,48 +61,83 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('user_id', userId)
         .eq('status', 'active');
 
-      if (!error && data) {
-        setRoles(data.map(r => r.role as AppRole));
-      } else {
-        setRoles([]);
+      if (error) {
+        console.error('Error fetching roles:', error);
+        return [];
       }
-    } finally {
-      setRolesLoading(false);
+
+      return (data || []).map(r => r.role as AppRole);
+    } catch (err) {
+      console.error('Exception fetching roles:', err);
+      return [];
     }
-  };
+  }, []);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    let isMounted = true;
 
-        if (session?.user) {
-          await fetchUserRoles(session.user.id);
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+
+        if (!isMounted) return;
+
+        if (initialSession?.user) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+          const userRoles = await fetchUserRoles(initialSession.user.id);
+          if (isMounted) {
+            setRoles(userRoles);
+          }
         } else {
+          setSession(null);
+          setUser(null);
           setRoles([]);
-          setRolesLoading(false);
         }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          setInitialized(true);
+        }
+      }
+    };
 
-        setLoading(false);
+    initializeAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        if (!isMounted || !initialized) return;
+
+        console.log('Auth state changed:', event);
+
+        if (newSession?.user) {
+          setSession(newSession);
+          setUser(newSession.user);
+
+          // Only fetch roles on sign in events
+          if (event === 'SIGNED_IN') {
+            const userRoles = await fetchUserRoles(newSession.user.id);
+            if (isMounted) {
+              setRoles(userRoles);
+            }
+          }
+        } else {
+          setSession(null);
+          setUser(null);
+          setRoles([]);
+        }
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        await fetchUserRoles(session.user.id);
-      } else {
-        setRolesLoading(false);
-      }
-
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchUserRoles, initialized]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -106,34 +166,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = roles.includes('ADMIN');
   const isStaff = roles.includes('STAFF');
-
-  const primaryRole = useMemo<AppRole | null>(() => {
-    if (roles.includes('ADMIN')) return 'ADMIN';
-    if (roles.includes('STAFF')) return 'STAFF';
-    if (roles.includes('FLEET')) return 'FLEET';
-    if (roles.includes('DRIVER')) return 'DRIVER';
-    if (roles.includes('CUSTOMER')) return 'CUSTOMER';
-    return null;
-  }, [roles]);
-
-  const homePath = useMemo(() => {
-    if (primaryRole === 'ADMIN' || primaryRole === 'STAFF') return '/admin';
-    if (primaryRole === 'DRIVER') return '/driver';
-    if (primaryRole === 'FLEET') return '/fleet';
-    // CUSTOMER vai ser o site público depois
-    if (primaryRole === 'CUSTOMER') return '/';
-    return '/unauthorized';
-  }, [primaryRole]);
-
+  const primaryRole = getPrimaryRole(roles);
+  const homePath = getHomePath(primaryRole);
   const hasRole = (role: AppRole) => roles.includes(role);
-
-  const isLoading = loading || rolesLoading;
 
   return (
     <AuthContext.Provider value={{
       user,
       session,
-      loading: isLoading,
+      loading,
       roles,
       primaryRole,
       homePath,
