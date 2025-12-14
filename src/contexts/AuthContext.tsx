@@ -24,44 +24,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rolesLoading, setRolesLoading] = useState(true);
   const [roles, setRoles] = useState<AppRole[]>([]);
 
   const fetchUserRoles = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('status', 'active');
+    setRolesLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('status', 'active');
 
-    if (!error && data) {
-      setRoles(data.map(r => r.role as AppRole));
-    } else {
-      setRoles([]);
+      if (!error && data) {
+        setRoles(data.map(r => r.role as AppRole));
+      } else {
+        setRoles([]);
+      }
+    } finally {
+      setRolesLoading(false);
     }
   };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          // evita race condition com render
-          setTimeout(() => fetchUserRoles(session.user.id), 0);
+          await fetchUserRoles(session.user.id);
         } else {
           setRoles([]);
+          setRolesLoading(false);
         }
 
         setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
 
-      if (session?.user) fetchUserRoles(session.user.id);
+      if (session?.user) {
+        await fetchUserRoles(session.user.id);
+      } else {
+        setRolesLoading(false);
+      }
 
       setLoading(false);
     });
@@ -117,11 +127,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasRole = (role: AppRole) => roles.includes(role);
 
+  const isLoading = loading || rolesLoading;
+
   return (
     <AuthContext.Provider value={{
       user,
       session,
-      loading,
+      loading: isLoading,
       roles,
       primaryRole,
       homePath,
