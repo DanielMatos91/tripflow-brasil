@@ -34,6 +34,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { DocumentUpload } from '@/components/documents/DocumentUpload';
+import { getSignedUrl } from '@/hooks/useSignedUrl';
 
 interface DriverWithProfile extends Omit<Driver, 'profile'> {
   profile?: {
@@ -338,11 +340,16 @@ export default function DriverDetail() {
 
         {/* Documents */}
         <Card className="lg:col-span-3">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Documentos
             </CardTitle>
+            <DocumentUpload
+              ownerType="driver"
+              ownerId={id!}
+              onUploadComplete={fetchDocuments}
+            />
           </CardHeader>
           <CardContent>
             {documents.length === 0 ? (
@@ -378,7 +385,11 @@ export default function DriverDetail() {
                         variant="outline"
                         size="sm"
                         className="flex-1"
-                        onClick={() => window.open(doc.file_url, '_blank')}
+                        onClick={async () => {
+                          const url = await getSignedUrl(doc.file_url);
+                          if (url) window.open(url, '_blank');
+                          else toast.error('Erro ao carregar documento');
+                        }}
                       >
                         Ver arquivo
                       </Button>
