@@ -69,12 +69,20 @@ export function TripForm({ onSuccess, initialData, tripId }: TripFormProps) {
     const margin = data.price_customer - data.payout_driver - (data.estimated_costs || 0);
 
     const tripData = {
-      ...data,
+      customer_name: data.customer_name,
+      customer_phone: data.customer_phone,
       customer_email: data.customer_email || null,
-      notes: data.notes || null,
+      origin_text: data.origin_text,
+      destination_text: data.destination_text,
+      pickup_datetime: data.pickup_datetime,
+      passengers: data.passengers,
+      luggage: data.luggage,
+      price_customer: data.price_customer,
+      payout_driver: data.payout_driver,
       estimated_costs: data.estimated_costs || null,
+      notes: data.notes || null,
       calculated_margin: margin,
-      created_by: user?.id,
+      created_by: user?.id || null,
     };
 
     let error;
@@ -86,7 +94,7 @@ export function TripForm({ onSuccess, initialData, tripId }: TripFormProps) {
         .eq('id', tripId);
       error = result.error;
     } else {
-      const result = await supabase.from('trips').insert([tripData]);
+      const result = await supabase.from('trips').insert(tripData);
       error = result.error;
     }
 

@@ -77,7 +77,7 @@ export default function FleetDetail() {
       .order('created_at', { ascending: false });
 
     if (data) {
-      setDocuments(data);
+      setDocuments(data as unknown as Document[]);
     }
   };
 

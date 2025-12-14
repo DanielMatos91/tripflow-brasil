@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
-import { TripStatus, PaymentStatus, DocumentStatus, DriverStatus, FleetStatus, PayoutStatus } from '@/types/database';
+import { TripStatus, PaymentStatus, DocumentStatus, DriverStatus, FleetStatus, PayoutStatus, VehicleStatus } from '@/types/database';
 
-type StatusType = TripStatus | PaymentStatus | DocumentStatus | DriverStatus | FleetStatus | PayoutStatus;
+type StatusType = TripStatus | PaymentStatus | DocumentStatus | DriverStatus | FleetStatus | PayoutStatus | VehicleStatus | string;
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -34,6 +34,11 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   active: { label: 'Ativo', className: 'status-completed' },
   inactive: { label: 'Inativo', className: 'status-draft' },
   blocked: { label: 'Bloqueado', className: 'status-canceled' },
+  
+  // Vehicle statuses
+  available: { label: 'Disponível', className: 'status-completed' },
+  in_use: { label: 'Em Uso', className: 'status-in-progress' },
+  maintenance: { label: 'Manutenção', className: 'status-pending' },
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {

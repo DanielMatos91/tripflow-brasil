@@ -39,7 +39,7 @@ export default function Fleets() {
       .select('*', { count: 'exact' });
 
     if (statusFilter !== 'all') {
-      query = query.eq('status', statusFilter);
+      query = query.eq('status', statusFilter as 'pending' | 'active' | 'inactive' | 'blocked');
     }
 
     if (search) {
