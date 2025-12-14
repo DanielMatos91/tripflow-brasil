@@ -533,6 +533,7 @@ export type Database = {
     }
     Functions: {
       claim_trip: { Args: { _trip_id: string }; Returns: Json }
+      complete_trip: { Args: { _trip_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -541,6 +542,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_staff: { Args: { _user_id: string }; Returns: boolean }
+      start_trip: { Args: { _trip_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "ADMIN" | "STAFF" | "DRIVER" | "FLEET" | "CUSTOMER"
