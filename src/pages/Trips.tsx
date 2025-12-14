@@ -49,7 +49,7 @@ export default function Trips() {
       .select('*', { count: 'exact' });
 
     if (statusFilter !== 'all') {
-      query = query.eq('status', statusFilter);
+      query = query.eq('status', statusFilter as 'DRAFT' | 'PENDING_PAYMENT' | 'PUBLISHED' | 'CLAIMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELED' | 'REFUNDED');
     }
 
     if (search) {

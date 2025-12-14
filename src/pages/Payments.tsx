@@ -45,11 +45,11 @@ export default function Payments() {
       .select('*, trip:trips(*)', { count: 'exact' });
 
     if (statusFilter !== 'all') {
-      query = query.eq('status', statusFilter);
+      query = query.eq('status', statusFilter as 'pending' | 'paid' | 'failed' | 'refunded');
     }
 
     if (methodFilter !== 'all') {
-      query = query.eq('method', methodFilter);
+      query = query.eq('method', methodFilter as 'PIX' | 'CARD');
     }
 
     const { data, count, error } = await query

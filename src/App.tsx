@@ -7,6 +7,16 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Trips from "./pages/Trips";
+import TripDetail from "./pages/TripDetail";
+import Payments from "./pages/Payments";
+import Drivers from "./pages/Drivers";
+import DriverDetail from "./pages/DriverDetail";
+import Fleets from "./pages/Fleets";
+import FleetDetail from "./pages/FleetDetail";
+import Documents from "./pages/Documents";
+import Payouts from "./pages/Payouts";
+import AuditLogs from "./pages/AuditLogs";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -33,13 +43,16 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/auth" element={<Auth />} />
     <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/trips" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/payments" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/drivers" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/fleets" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/documents" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/payouts" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/audit" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+    <Route path="/trips" element={<ProtectedRoute><Trips /></ProtectedRoute>} />
+    <Route path="/trips/:id" element={<ProtectedRoute><TripDetail /></ProtectedRoute>} />
+    <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+    <Route path="/drivers" element={<ProtectedRoute><Drivers /></ProtectedRoute>} />
+    <Route path="/drivers/:id" element={<ProtectedRoute><DriverDetail /></ProtectedRoute>} />
+    <Route path="/fleets" element={<ProtectedRoute><Fleets /></ProtectedRoute>} />
+    <Route path="/fleets/:id" element={<ProtectedRoute><FleetDetail /></ProtectedRoute>} />
+    <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+    <Route path="/payouts" element={<ProtectedRoute><Payouts /></ProtectedRoute>} />
+    <Route path="/audit" element={<ProtectedRoute><AuditLogs /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

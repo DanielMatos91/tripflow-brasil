@@ -19,9 +19,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-interface PayoutWithRelations extends Payout {
-  driver?: Driver & { profile?: { name: string } };
-  fleet?: Fleet;
+interface PayoutWithRelations extends Omit<Payout, 'driver' | 'fleet'> {
+  driver?: { id: string; profile?: { name: string } | null } | null;
+  fleet?: Fleet | null;
 }
 
 export default function Payouts() {
@@ -49,12 +49,12 @@ export default function Payouts() {
     let query = supabase
       .from('payouts')
       .select(
-        '*, driver:drivers(*, profile:profiles!drivers_user_id_fkey(name)), fleet:fleets(*)',
+        '*, driver:drivers(id, user_id), fleet:fleets(*)',
         { count: 'exact' }
       );
 
     if (statusFilter !== 'all') {
-      query = query.eq('status', statusFilter);
+      query = query.eq('status', statusFilter as 'pending' | 'paid');
     }
 
     if (dateFrom) {
@@ -70,7 +70,7 @@ export default function Payouts() {
       .range((page - 1) * pageSize, page * pageSize - 1);
 
     if (!error && data) {
-      setPayouts(data as PayoutWithRelations[]);
+      setPayouts(data as unknown as PayoutWithRelations[]);
       setTotal(count || 0);
     }
     setLoading(false);
