@@ -76,23 +76,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
+    // Listen for auth changes FIRST (avoid missing SIGNED_IN during init)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (!isMounted) return;
+
+      // only sync updates here
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+
+      // fetch roles outside of the callback to avoid deadlocks
+      if (newSession?.user) {
+        setLoading(true);
+        setTimeout(async () => {
+          const userRoles = await fetchUserRoles(newSession.user.id);
+          if (isMounted) {
+            setRoles(userRoles);
+            setLoading(false);
+          }
+        }, 0);
+      } else {
+        setRoles([]);
+        setLoading(false);
+      }
+    });
+
     const initializeAuth = async () => {
       try {
-        // Get initial session
         const { data: { session: initialSession } } = await supabase.auth.getSession();
-
         if (!isMounted) return;
 
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+
         if (initialSession?.user) {
-          setSession(initialSession);
-          setUser(initialSession.user);
           const userRoles = await fetchUserRoles(initialSession.user.id);
           if (isMounted) {
             setRoles(userRoles);
           }
         } else {
-          setSession(null);
-          setUser(null);
           setRoles([]);
         }
       } catch (err) {
@@ -100,44 +121,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } finally {
         if (isMounted) {
           setLoading(false);
-          setInitialized(true);
         }
       }
     };
 
     initializeAuth();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        if (!isMounted || !initialized) return;
-
-        console.log('Auth state changed:', event);
-
-        if (newSession?.user) {
-          setSession(newSession);
-          setUser(newSession.user);
-
-          // Only fetch roles on sign in events
-          if (event === 'SIGNED_IN') {
-            const userRoles = await fetchUserRoles(newSession.user.id);
-            if (isMounted) {
-              setRoles(userRoles);
-            }
-          }
-        } else {
-          setSession(null);
-          setUser(null);
-          setRoles([]);
-        }
-      }
-    );
-
     return () => {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserRoles, initialized]);
+  }, [fetchUserRoles]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
