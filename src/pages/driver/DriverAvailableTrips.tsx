@@ -86,10 +86,13 @@ export default function DriverAvailableTrips() {
     return (
       <DriverLayout title="Corridas Disponíveis">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-6 text-center space-y-4">
             <p className="text-muted-foreground">
-              Você não possui um perfil de motorista cadastrado.
+              Você precisa completar seu cadastro de motorista para acessar as corridas.
             </p>
+            <Button onClick={() => window.location.href = "/driver/register"}>
+              Completar Cadastro
+            </Button>
           </CardContent>
         </Card>
       </DriverLayout>
