@@ -256,7 +256,7 @@ export default function Trips() {
         data={trips}
         columns={columns}
         keyExtractor={(trip) => trip.id}
-        onRowClick={(trip) => navigate(`/trips/${trip.id}`)}
+        onRowClick={(trip) => navigate(`/admin/trips/${trip.id}`)}
         loading={loading}
         emptyMessage="Nenhuma corrida encontrada"
         pagination={{

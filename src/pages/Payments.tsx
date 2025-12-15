@@ -200,7 +200,7 @@ export default function Payments() {
         data={payments}
         columns={columns}
         keyExtractor={(payment) => payment.id}
-        onRowClick={(payment) => navigate(`/trips/${payment.trip_id}`)}
+        onRowClick={(payment) => navigate(`/admin/trips/${payment.trip_id}`)}
         loading={loading}
         emptyMessage="Nenhum pagamento encontrado"
         pagination={{

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { DriverLayout } from "@/components/layout/DriverLayout";
 import { useDriverProfile } from "@/hooks/useDriverProfile";
@@ -12,6 +13,7 @@ import { MapPin, Users, Briefcase, Calendar, Loader2 } from "lucide-react";
 import { Trip } from "@/types/database";
 
 export default function DriverAvailableTrips() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { driver, loading: driverLoading, isVerified } = useDriverProfile();
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -90,7 +92,7 @@ export default function DriverAvailableTrips() {
             <p className="text-muted-foreground">
               Você precisa completar seu cadastro de motorista para acessar as corridas.
             </p>
-            <Button onClick={() => window.location.href = "/driver/register"}>
+            <Button onClick={() => navigate("/driver/register")}>
               Completar Cadastro
             </Button>
           </CardContent>

@@ -153,7 +153,7 @@ export default function Dashboard() {
       {/* Alerts */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         {stats.pendingDrivers > 0 && (
-          <Link to="/drivers">
+          <Link to="/admin/drivers">
             <Card className="border-warning/30 bg-warning/5 hover:bg-warning/10 transition-colors cursor-pointer">
               <CardContent className="flex items-center gap-4 p-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/20">
@@ -170,7 +170,7 @@ export default function Dashboard() {
         )}
 
         {stats.pendingDocuments > 0 && (
-          <Link to="/documents">
+          <Link to="/admin/documents">
             <Card className="border-destructive/30 bg-destructive/5 hover:bg-destructive/10 transition-colors cursor-pointer">
               <CardContent className="flex items-center gap-4 p-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/20">
@@ -187,7 +187,7 @@ export default function Dashboard() {
         )}
 
         {stats.pendingPayments > 0 && (
-          <Link to="/payments">
+          <Link to="/admin/payments">
             <Card className="border-info/30 bg-info/5 hover:bg-info/10 transition-colors cursor-pointer">
               <CardContent className="flex items-center gap-4 p-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/20">
@@ -210,7 +210,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Próximas Corridas</CardTitle>
-            <Link to="/trips">
+            <Link to="/admin/trips">
               <Button variant="ghost" size="sm">
                 Ver todas <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
@@ -227,7 +227,7 @@ export default function Dashboard() {
                 {upcomingTrips.map((trip) => (
                   <Link
                     key={trip.id}
-                    to={`/trips/${trip.id}`}
+                    to={`/admin/trips/${trip.id}`}
                     className="flex items-center gap-4 rounded-lg border p-3 transition-colors hover:bg-muted/50"
                   >
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
@@ -256,7 +256,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Pagamentos com Problema</CardTitle>
-            <Link to="/payments">
+            <Link to="/admin/payments">
               <Button variant="ghost" size="sm">
                 Ver todos <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
@@ -273,7 +273,7 @@ export default function Dashboard() {
                 {failedPayments.map((payment) => (
                   <Link
                     key={payment.id}
-                    to={`/payments/${payment.id}`}
+                    to={`/admin/payments/${payment.id}`}
                     className="flex items-center gap-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 transition-colors hover:bg-destructive/10"
                   >
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/20">

@@ -174,7 +174,7 @@ export default function FleetDetail() {
   if (!fleet) {
     return (
       <AdminLayout title="Frota não encontrada" subtitle="">
-        <Button onClick={() => navigate('/fleets')}>
+        <Button onClick={() => navigate('/admin/fleets')}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
         </Button>
       </AdminLayout>
@@ -189,7 +189,7 @@ export default function FleetDetail() {
       {/* Back Button */}
       <Button
         variant="ghost"
-        onClick={() => navigate('/fleets')}
+        onClick={() => navigate('/admin/fleets')}
         className="mb-6"
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para lista
