@@ -9,7 +9,8 @@ import { Driver } from '@/types/database';
 import { format, parseISO } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Filter, Download } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { CheckCircle, XCircle, Filter, Download, ShieldCheck, Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -28,6 +29,7 @@ interface DriverWithProfile extends Omit<Driver, 'profile'> {
 
 export default function Drivers() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [drivers, setDrivers] = useState<DriverWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -35,6 +37,7 @@ export default function Drivers() {
   const [verifiedFilter, setVerifiedFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [verifying, setVerifying] = useState<string | null>(null);
   const pageSize = 10;
 
   useEffect(() => {
@@ -69,6 +72,31 @@ export default function Drivers() {
       setTotal(count || 0);
     }
     setLoading(false);
+  };
+
+  const handleVerify = async (driverId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setVerifying(driverId);
+    
+    const { error } = await supabase
+      .from('drivers')
+      .update({ verified: true, status: 'active' })
+      .eq('id', driverId);
+    
+    if (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível verificar o motorista.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Sucesso',
+        description: 'Motorista verificado e ativado!',
+      });
+      fetchDrivers();
+    }
+    setVerifying(null);
   };
 
   const columns = [
@@ -124,12 +152,29 @@ export default function Drivers() {
       render: (driver: DriverWithProfile) => <StatusBadge status={driver.status} />,
     },
     {
-      key: 'created_at',
-      header: 'Cadastro',
+      key: 'actions',
+      header: 'Ações',
       render: (driver: DriverWithProfile) => (
-        <span className="text-sm text-muted-foreground">
-          {format(parseISO(driver.created_at), 'dd/MM/yyyy')}
-        </span>
+        <div className="flex items-center gap-2">
+          {!driver.verified && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 border-success/50 text-success hover:bg-success/10 hover:text-success"
+              onClick={(e) => handleVerify(driver.id, e)}
+              disabled={verifying === driver.id}
+            >
+              {verifying === driver.id ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <ShieldCheck className="mr-1 h-4 w-4" />
+                  Verificar
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       ),
     },
   ];
