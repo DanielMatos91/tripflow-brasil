@@ -149,7 +149,7 @@ export default function Fleets() {
         data={fleets}
         columns={columns}
         keyExtractor={(fleet) => fleet.id}
-        onRowClick={(fleet) => navigate(`/fleets/${fleet.id}`)}
+        onRowClick={(fleet) => navigate(`/admin/fleets/${fleet.id}`)}
         loading={loading}
         emptyMessage="Nenhuma frota encontrada"
         pagination={{
