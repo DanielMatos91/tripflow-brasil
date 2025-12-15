@@ -19,14 +19,14 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { title: 'Dashboard', url: '/', icon: LayoutDashboard },
-  { title: 'Corridas', url: '/trips', icon: Car },
-  { title: 'Pagamentos', url: '/payments', icon: CreditCard },
-  { title: 'Motoristas', url: '/drivers', icon: Users },
-  { title: 'Frotas', url: '/fleets', icon: Building2 },
-  { title: 'Documentos', url: '/documents', icon: FileText },
-  { title: 'Repasses', url: '/payouts', icon: Wallet },
-  { title: 'Auditoria', url: '/audit', icon: ClipboardList },
+  { title: 'Dashboard', url: '/admin', icon: LayoutDashboard },
+  { title: 'Corridas', url: '/admin/trips', icon: Car },
+  { title: 'Pagamentos', url: '/admin/payments', icon: CreditCard },
+  { title: 'Motoristas', url: '/admin/drivers', icon: Users },
+  { title: 'Frotas', url: '/admin/fleets', icon: Building2 },
+  { title: 'Documentos', url: '/admin/documents', icon: FileText },
+  { title: 'Repasses', url: '/admin/payouts', icon: Wallet },
+  { title: 'Auditoria', url: '/admin/audit', icon: ClipboardList },
 ];
 
 export function AdminSidebar() {
