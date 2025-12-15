@@ -9,7 +9,7 @@ import { Trip } from '@/types/database';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Filter, Download, Users, Briefcase } from 'lucide-react';
+import { Plus, Filter, Download, Users, Briefcase, Send } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -25,11 +25,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { TripForm } from '@/components/trips/TripForm';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Trips() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [publishing, setPublishing] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
@@ -140,9 +143,51 @@ export default function Trips() {
     {
       key: 'status',
       header: 'Status',
-      render: (trip: Trip) => <StatusBadge status={trip.status} />,
+      render: (trip: Trip) => (
+        <div className="flex items-center gap-2">
+          <StatusBadge status={trip.status} />
+          {trip.status === 'DRAFT' && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2"
+              disabled={publishing === trip.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePublish(trip.id);
+              }}
+            >
+              <Send className="h-3 w-3 mr-1" />
+              Publicar
+            </Button>
+          )}
+        </div>
+      ),
     },
   ];
+
+  const handlePublish = async (tripId: string) => {
+    setPublishing(tripId);
+    const { error } = await supabase
+      .from('trips')
+      .update({ status: 'PUBLISHED', updated_at: new Date().toISOString() })
+      .eq('id', tripId);
+
+    if (error) {
+      toast({
+        title: 'Erro ao publicar',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Corrida publicada',
+        description: 'A corrida está disponível para os motoristas.',
+      });
+      fetchTrips();
+    }
+    setPublishing(null);
+  };
 
   return (
     <AdminLayout
