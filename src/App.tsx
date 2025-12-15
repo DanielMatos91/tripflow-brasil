@@ -27,6 +27,7 @@ import {
   DriverMyTrips,
   DriverPayouts as DriverPayoutsPage,
   DriverDocuments,
+  DriverProfileForm,
 } from "./pages/driver";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const AppRoutes = () => (
     {/* DRIVER routes */}
     <Route path="/driver" element={<RoleRoute allow={["DRIVER"]}><DriverAvailableTrips /></RoleRoute>} />
     <Route path="/driver/available" element={<RoleRoute allow={["DRIVER"]}><DriverAvailableTrips /></RoleRoute>} />
+    <Route path="/driver/register" element={<RoleRoute allow={["DRIVER"]}><DriverProfileForm /></RoleRoute>} />
     <Route path="/driver/my-trips" element={<RoleRoute allow={["DRIVER"]}><DriverMyTrips /></RoleRoute>} />
     <Route path="/driver/payouts" element={<RoleRoute allow={["DRIVER"]}><DriverPayoutsPage /></RoleRoute>} />
     <Route path="/driver/documents" element={<RoleRoute allow={["DRIVER"]}><DriverDocuments /></RoleRoute>} />
