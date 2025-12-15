@@ -46,7 +46,7 @@ export default function Drivers() {
     
     let query = supabase
       .from('drivers')
-      .select('*, profile:profiles!drivers_user_id_fkey(name, email, phone)', { count: 'exact' });
+      .select('*, profile:profiles(name, email, phone)', { count: 'exact' });
     
     if (statusFilter !== 'all') {
       query = query.eq('status', statusFilter as 'pending' | 'active' | 'inactive' | 'blocked');
@@ -186,7 +186,7 @@ export default function Drivers() {
         data={drivers}
         columns={columns}
         keyExtractor={(driver) => driver.id}
-        onRowClick={(driver) => navigate(`/drivers/${driver.id}`)}
+        onRowClick={(driver) => navigate(`/admin/drivers/${driver.id}`)}
         loading={loading}
         emptyMessage="Nenhum motorista encontrado"
         pagination={{
