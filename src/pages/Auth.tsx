@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,7 +29,8 @@ const signupSchema = z.object({
 export default function Auth() {
   const { user, loading, signIn, signUp } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [tab, setTab] = useState<'login' | 'signup'>('login');
+  const [tab, setTab] = useState<'login' | 'signup' | 'forgot'>('login');
+  const [forgotEmail, setForgotEmail] = useState('');
 
   // Login form
   const [loginEmail, setLoginEmail] = useState('');
@@ -79,6 +81,29 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!forgotEmail || !z.string().email().safeParse(forgotEmail).success) {
+      toast.error('Digite um email válido');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+    setIsSubmitting(false);
+
+    if (error) {
+      toast.error('Erro ao enviar email de recuperação.');
+    } else {
+      toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
+      setTab('login');
+      setForgotEmail('');
+    }
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -126,16 +151,45 @@ export default function Auth() {
         <Card className="shadow-card">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-center text-xl">
-              {tab === 'login' ? 'Entrar na sua conta' : 'Criar nova conta'}
+              {tab === 'login' ? 'Entrar na sua conta' : tab === 'signup' ? 'Criar nova conta' : 'Recuperar senha'}
             </CardTitle>
             <CardDescription className="text-center">
               {tab === 'login'
                 ? 'Digite suas credenciais para acessar'
-                : 'Preencha os dados para se cadastrar'}
+                : tab === 'signup'
+                ? 'Preencha os dados para se cadastrar'
+                : 'Informe seu email para recuperar a senha'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={tab} onValueChange={(v) => setTab(v as 'login' | 'signup')}>
+            {tab === 'forgot' ? (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email">Email</Label>
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Enviar email de recuperação
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setTab('login')}
+                >
+                  Voltar ao login
+                </Button>
+              </form>
+            ) : (
+            <Tabs value={tab} onValueChange={(v) => setTab(v as 'login' | 'signup' | 'forgot')}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Cadastrar</TabsTrigger>
@@ -168,6 +222,14 @@ export default function Auth() {
                   <Button type="submit" className="w-full" disabled={isSubmitting}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Entrar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="w-full text-sm text-muted-foreground"
+                    onClick={() => setTab('forgot')}
+                  >
+                    Esqueci minha senha
                   </Button>
                 </form>
               </TabsContent>
@@ -225,6 +287,7 @@ export default function Auth() {
                 </form>
               </TabsContent>
             </Tabs>
+            )}
           </CardContent>
         </Card>
       </div>

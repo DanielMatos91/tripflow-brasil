@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   Building2,
-  ChevronLeft
+  ChevronLeft,
+  Shield,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ const navItems = [
   { title: 'Documentos', url: '/admin/documents', icon: FileText },
   { title: 'Repasses', url: '/admin/payouts', icon: Wallet },
   { title: 'Auditoria', url: '/admin/audit', icon: ClipboardList },
+  { title: 'Usuários', url: '/admin/users', icon: Shield },
 ];
 
 export function AdminSidebar() {
