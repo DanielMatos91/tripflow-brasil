@@ -185,7 +185,7 @@ export default function DriverDetail() {
   if (!driver) {
     return (
       <AdminLayout title="Motorista não encontrado" subtitle="">
-        <Button onClick={() => navigate('/drivers')}>
+        <Button onClick={() => navigate('/admin/drivers')}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
         </Button>
       </AdminLayout>
@@ -200,7 +200,7 @@ export default function DriverDetail() {
       {/* Back Button */}
       <Button
         variant="ghost"
-        onClick={() => navigate('/drivers')}
+        onClick={() => navigate('/admin/drivers')}
         className="mb-6"
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para lista

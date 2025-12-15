@@ -225,7 +225,7 @@ export default function TripDetail() {
   if (!trip) {
     return (
       <AdminLayout title="Corrida não encontrada" subtitle="">
-        <Button onClick={() => navigate('/trips')}>
+        <Button onClick={() => navigate('/admin/trips')}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
         </Button>
       </AdminLayout>
@@ -242,7 +242,7 @@ export default function TripDetail() {
       {/* Back Button */}
       <Button
         variant="ghost"
-        onClick={() => navigate('/trips')}
+        onClick={() => navigate('/admin/trips')}
         className="mb-6"
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para lista
