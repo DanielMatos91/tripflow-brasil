@@ -101,6 +101,13 @@ export default function Drivers() {
 
   const columns = [
     {
+      key: 'id',
+      header: 'ID',
+      render: (driver: DriverWithProfile) => (
+        <span className="font-mono text-xs text-muted-foreground">{driver.id.slice(0, 8)}</span>
+      ),
+    },
+    {
       key: 'name',
       header: 'Motorista',
       render: (driver: DriverWithProfile) => (

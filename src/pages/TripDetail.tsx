@@ -49,8 +49,9 @@ import { TripForm } from '@/components/trips/TripForm';
 export default function TripDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [trip, setTrip] = useState<Trip | null>(null);
+  const [trip, setTrip] = useState<any>(null);
   const [payment, setPayment] = useState<Payment | null>(null);
+  const [driverInfo, setDriverInfo] = useState<{ name: string; id: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -67,12 +68,25 @@ export default function TripDetail() {
   const fetchTrip = async () => {
     const { data, error } = await supabase
       .from('trips')
-      .select('*')
+      .select(`
+        *,
+        driver:drivers(
+          id,
+          user_id,
+          profile:profiles(name)
+        )
+      `)
       .eq('id', id)
       .maybeSingle();
 
     if (!error && data) {
       setTrip(data);
+      if (data.driver) {
+        setDriverInfo({
+          name: data.driver.profile?.name || 'Sem nome',
+          id: data.driver.id,
+        });
+      }
     }
     setLoading(false);
   };
@@ -332,6 +346,25 @@ export default function TripDetail() {
                 </div>
               )}
             </div>
+
+            {/* Driver Info */}
+            {driverInfo && (
+              <div className="border-t pt-4">
+                <h4 className="mb-3 flex items-center gap-2 font-semibold">
+                  <User className="h-4 w-4" /> Motorista
+                </h4>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Nome</p>
+                    <p className="font-medium">{driverInfo.name}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">ID</p>
+                    <p className="font-medium font-mono text-sm">{driverInfo.id.slice(0, 8)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Pricing */}
             <div className="border-t pt-4">
