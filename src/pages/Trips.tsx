@@ -49,7 +49,14 @@ export default function Trips() {
 
     let query = supabase
       .from('trips')
-      .select('*', { count: 'exact' });
+      .select(`
+        *,
+        driver:drivers(
+          id,
+          user_id,
+          profile:profiles(name)
+        )
+      `, { count: 'exact' });
 
     if (statusFilter !== 'all') {
       query = query.eq('status', statusFilter as 'DRAFT' | 'PENDING_PAYMENT' | 'PUBLISHED' | 'CLAIMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELED' | 'REFUNDED');
@@ -64,7 +71,7 @@ export default function Trips() {
       .range((page - 1) * pageSize, page * pageSize - 1);
 
     if (!error && data) {
-      setTrips(data);
+      setTrips(data as any);
       setTotal(count || 0);
     }
     setLoading(false);
@@ -139,6 +146,22 @@ export default function Trips() {
           </p>
         </div>
       ),
+    },
+    {
+      key: 'driver',
+      header: 'Motorista',
+      render: (trip: any) => {
+        if (!trip.driver_id || !trip.driver) {
+          return <span className="text-muted-foreground text-sm">—</span>;
+        }
+        const driverName = trip.driver?.profile?.name || 'Sem nome';
+        return (
+          <div>
+            <p className="font-medium text-foreground">{driverName}</p>
+            <p className="text-xs text-muted-foreground">ID: {trip.driver.id.slice(0, 8)}</p>
+          </div>
+        );
+      },
     },
     {
       key: 'status',
