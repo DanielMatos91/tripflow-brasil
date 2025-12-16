@@ -14,6 +14,7 @@ import {
   Building2,
   ChevronLeft,
   Shield,
+  Package,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ const navItems = [
   { title: 'Pagamentos', url: '/admin/payments', icon: CreditCard },
   { title: 'Motoristas', url: '/admin/drivers', icon: Users },
   { title: 'Frotas', url: '/admin/fleets', icon: Building2 },
+  { title: 'Fornecedores', url: '/admin/suppliers', icon: Package },
   { title: 'Documentos', url: '/admin/documents', icon: FileText },
   { title: 'Repasses', url: '/admin/payouts', icon: Wallet },
   { title: 'Auditoria', url: '/admin/audit', icon: ClipboardList },
