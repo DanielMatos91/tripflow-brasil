@@ -346,8 +346,42 @@ export type Database = {
         }
         Relationships: []
       }
+      suppliers: {
+        Row: {
+          code: string
+          created_at: string
+          email: string
+          id: string
+          manager_name: string
+          name: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          email: string
+          id?: string
+          manager_name: string
+          name: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          email?: string
+          id?: string
+          manager_name?: string
+          name?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trips: {
         Row: {
+          arrival_time: string | null
           calculated_margin: number | null
           cancel_reason: string | null
           canceled_at: string | null
@@ -363,6 +397,7 @@ export type Database = {
           estimated_costs: number | null
           extras: string[] | null
           fleet_id: string | null
+          flight_code: string | null
           id: string
           luggage: number
           notes: string | null
@@ -373,9 +408,11 @@ export type Database = {
           price_customer: number
           started_at: string | null
           status: Database["public"]["Enums"]["trip_status"]
+          supplier_id: string | null
           updated_at: string
         }
         Insert: {
+          arrival_time?: string | null
           calculated_margin?: number | null
           cancel_reason?: string | null
           canceled_at?: string | null
@@ -391,6 +428,7 @@ export type Database = {
           estimated_costs?: number | null
           extras?: string[] | null
           fleet_id?: string | null
+          flight_code?: string | null
           id?: string
           luggage?: number
           notes?: string | null
@@ -401,9 +439,11 @@ export type Database = {
           price_customer: number
           started_at?: string | null
           status?: Database["public"]["Enums"]["trip_status"]
+          supplier_id?: string | null
           updated_at?: string
         }
         Update: {
+          arrival_time?: string | null
           calculated_margin?: number | null
           cancel_reason?: string | null
           canceled_at?: string | null
@@ -419,6 +459,7 @@ export type Database = {
           estimated_costs?: number | null
           extras?: string[] | null
           fleet_id?: string | null
+          flight_code?: string | null
           id?: string
           luggage?: number
           notes?: string | null
@@ -429,6 +470,7 @@ export type Database = {
           price_customer?: number
           started_at?: string | null
           status?: Database["public"]["Enums"]["trip_status"]
+          supplier_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -444,6 +486,13 @@ export type Database = {
             columns: ["fleet_id"]
             isOneToOne: false
             referencedRelation: "fleets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trips_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]

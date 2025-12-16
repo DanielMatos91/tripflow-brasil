@@ -17,14 +17,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { SupplierCombobox } from '@/components/ui/supplier-combobox';
 
 const tripSchema = z.object({
+  supplier_id: z.string().min(1, 'Fornecedor é obrigatório'),
   customer_name: z.string().min(2, 'Nome é obrigatório'),
   customer_phone: z.string().min(10, 'Telefone inválido'),
   customer_email: z.string().email('Email inválido').optional().or(z.literal('')),
   origin_text: z.string().min(3, 'Origem é obrigatória'),
   destination_text: z.string().min(3, 'Destino é obrigatório'),
   pickup_datetime: z.string().min(1, 'Data/hora é obrigatória'),
+  flight_code: z.string().optional(),
+  arrival_time: z.string().optional(),
   passengers: z.coerce.number().min(1, 'Mínimo 1 passageiro'),
   luggage: z.coerce.number().min(0, 'Valor inválido'),
   price_customer: z.coerce.number().min(1, 'Valor do cliente é obrigatório'),
@@ -48,12 +52,15 @@ export function TripForm({ onSuccess, initialData, tripId }: TripFormProps) {
   const form = useForm<TripFormData>({
     resolver: zodResolver(tripSchema),
     defaultValues: {
+      supplier_id: initialData?.supplier_id || '',
       customer_name: initialData?.customer_name || '',
       customer_phone: initialData?.customer_phone || '',
       customer_email: initialData?.customer_email || '',
       origin_text: initialData?.origin_text || '',
       destination_text: initialData?.destination_text || '',
       pickup_datetime: initialData?.pickup_datetime || '',
+      flight_code: initialData?.flight_code || '',
+      arrival_time: initialData?.arrival_time || '',
       passengers: initialData?.passengers || 1,
       luggage: initialData?.luggage || 0,
       price_customer: initialData?.price_customer || 0,
@@ -69,12 +76,15 @@ export function TripForm({ onSuccess, initialData, tripId }: TripFormProps) {
     const margin = data.price_customer - data.payout_driver - (data.estimated_costs || 0);
 
     const tripData = {
+      supplier_id: data.supplier_id,
       customer_name: data.customer_name,
       customer_phone: data.customer_phone,
       customer_email: data.customer_email || null,
       origin_text: data.origin_text,
       destination_text: data.destination_text,
       pickup_datetime: data.pickup_datetime,
+      flight_code: data.flight_code || null,
+      arrival_time: data.arrival_time || null,
       passengers: data.passengers,
       luggage: data.luggage,
       price_customer: data.price_customer,
@@ -112,6 +122,24 @@ export function TripForm({ onSuccess, initialData, tripId }: TripFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Supplier */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-foreground">Fornecedor</h3>
+          <FormField
+            control={form.control}
+            name="supplier_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Código do Fornecedor *</FormLabel>
+                <FormControl>
+                  <SupplierCombobox value={field.value} onChange={field.onChange} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         {/* Customer Info */}
         <div className="space-y-4">
           <h3 className="font-semibold text-foreground">Dados do Cliente</h3>
@@ -196,6 +224,39 @@ export function TripForm({ onSuccess, initialData, tripId }: TripFormProps) {
                   <FormLabel>Data e Hora</FormLabel>
                   <FormControl>
                     <Input type="datetime-local" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Flight Info */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-foreground">Informações do Voo</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="flight_code"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Código do Voo</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: LA3456" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="arrival_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Horário de Chegada</FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
