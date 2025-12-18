@@ -104,6 +104,7 @@ export type Database = {
           id: string
           pix_key: string | null
           status: Database["public"]["Enums"]["driver_status"]
+          stripe_account_id: string | null
           updated_at: string
           user_id: string
           verified: boolean
@@ -119,6 +120,7 @@ export type Database = {
           id?: string
           pix_key?: string | null
           status?: Database["public"]["Enums"]["driver_status"]
+          stripe_account_id?: string | null
           updated_at?: string
           user_id: string
           verified?: boolean
@@ -134,6 +136,7 @@ export type Database = {
           id?: string
           pix_key?: string | null
           status?: Database["public"]["Enums"]["driver_status"]
+          stripe_account_id?: string | null
           updated_at?: string
           user_id?: string
           verified?: boolean
@@ -162,6 +165,7 @@ export type Database = {
           id: string
           pix_key: string | null
           status: Database["public"]["Enums"]["fleet_status"]
+          stripe_account_id: string | null
           updated_at: string
           user_id: string
         }
@@ -178,6 +182,7 @@ export type Database = {
           id?: string
           pix_key?: string | null
           status?: Database["public"]["Enums"]["fleet_status"]
+          stripe_account_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -194,6 +199,7 @@ export type Database = {
           id?: string
           pix_key?: string | null
           status?: Database["public"]["Enums"]["fleet_status"]
+          stripe_account_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -355,6 +361,7 @@ export type Database = {
           manager_name: string
           name: string
           phone: string
+          stripe_customer_id: string | null
           updated_at: string
         }
         Insert: {
@@ -365,6 +372,7 @@ export type Database = {
           manager_name: string
           name: string
           phone: string
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -375,6 +383,7 @@ export type Database = {
           manager_name?: string
           name?: string
           phone?: string
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Relationships: []

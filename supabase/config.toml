@@ -1,1 +1,13 @@
 project_id = "doxxbkqemwqnrgzgmyju"
+
+[functions.create-invoice]
+verify_jwt = false
+
+[functions.stripe-connect-onboard]
+verify_jwt = false
+
+[functions.create-payout]
+verify_jwt = false
+
+[functions.financial-reports]
+verify_jwt = false
