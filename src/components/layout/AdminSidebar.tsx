@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   Shield,
   Package,
+  BarChart3,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ const navItems = [
   { title: 'Fornecedores', url: '/admin/suppliers', icon: Package },
   { title: 'Documentos', url: '/admin/documents', icon: FileText },
   { title: 'Repasses', url: '/admin/payouts', icon: Wallet },
+  { title: 'Relatórios', url: '/admin/reports', icon: BarChart3 },
   { title: 'Auditoria', url: '/admin/audit', icon: ClipboardList },
   { title: 'Usuários', url: '/admin/users', icon: Shield },
 ];

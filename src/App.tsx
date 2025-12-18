@@ -21,6 +21,7 @@ import Payouts from "./pages/Payouts";
 import AuditLogs from "./pages/AuditLogs";
 import Users from "./pages/Users";
 import Suppliers from "./pages/Suppliers";
+import FinancialReports from "./pages/FinancialReports";
 
 // Driver pages
 import {
@@ -67,6 +68,7 @@ const AppRoutes = () => (
     <Route path="/admin/audit" element={<RoleRoute allow={["ADMIN", "STAFF"]}><AuditLogs /></RoleRoute>} />
     <Route path="/admin/users" element={<RoleRoute allow={["ADMIN"]}><Users /></RoleRoute>} />
     <Route path="/admin/suppliers" element={<RoleRoute allow={["ADMIN", "STAFF"]}><Suppliers /></RoleRoute>} />
+    <Route path="/admin/reports" element={<RoleRoute allow={["ADMIN", "STAFF"]}><FinancialReports /></RoleRoute>} />
 
     {/* DRIVER routes */}
     <Route path="/driver" element={<RoleRoute allow={["DRIVER"]}><DriverAvailableTrips /></RoleRoute>} />
