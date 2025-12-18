@@ -118,10 +118,15 @@ serve(async (req) => {
     logStep("Account ID saved to database");
 
     // Create account link for onboarding
+    // Use driver-specific URLs for drivers
+    const returnPath = type === "driver" 
+      ? "/driver/payouts" 
+      : `/admin/${type}s/${entity_id}`;
+    
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
-      refresh_url: `${origin}/admin/${type}s/${entity_id}?stripe_refresh=true`,
-      return_url: `${origin}/admin/${type}s/${entity_id}?stripe_success=true`,
+      refresh_url: `${origin}${returnPath}?stripe_refresh=true`,
+      return_url: `${origin}${returnPath}?stripe_success=true`,
       type: "account_onboarding",
     });
 

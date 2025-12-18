@@ -39,6 +39,7 @@ export interface Driver {
   bank_agency?: string;
   bank_account?: string;
   pix_key?: string;
+  stripe_account_id?: string;
   verified: boolean;
   status: DriverStatus;
   created_at: string;
@@ -58,6 +59,7 @@ export interface Fleet {
   bank_agency?: string;
   bank_account?: string;
   pix_key?: string;
+  stripe_account_id?: string;
   status: FleetStatus;
   created_at: string;
   updated_at: string;

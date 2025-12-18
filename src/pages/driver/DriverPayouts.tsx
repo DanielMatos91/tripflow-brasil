@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DriverLayout } from "@/components/layout/DriverLayout";
 import { useDriverProfile } from "@/hooks/useDriverProfile";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -14,8 +15,9 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2 } from "lucide-react";
+import { Loader2, CreditCard, CheckCircle2, ExternalLink } from "lucide-react";
 import { Payout } from "@/types/database";
+import { toast } from "sonner";
 
 const statusLabels: Record<string, string> = {
   pending: "Pendente",
@@ -28,9 +30,10 @@ const statusColors: Record<string, string> = {
 };
 
 export default function DriverPayouts() {
-  const { driver, loading: driverLoading } = useDriverProfile();
+  const { driver, loading: driverLoading, isStripeConnected, refetch } = useDriverProfile();
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [connectingStripe, setConnectingStripe] = useState(false);
 
   useEffect(() => {
     if (!driver) {
@@ -53,6 +56,46 @@ export default function DriverPayouts() {
 
     fetchPayouts();
   }, [driver]);
+
+  // Check for Stripe return URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("stripe_success") === "true") {
+      toast.success("Conta Stripe conectada com sucesso!");
+      refetch();
+      // Clean up URL
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (params.get("stripe_refresh") === "true") {
+      toast.info("Por favor, complete o cadastro no Stripe.");
+      // Clean up URL
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [refetch]);
+
+  const handleConnectStripe = async () => {
+    if (!driver) return;
+    
+    setConnectingStripe(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("stripe-connect-onboard", {
+        body: { type: "driver", entity_id: driver.id },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        if (data.already_connected) {
+          toast.info("Abrindo painel Stripe...");
+        }
+      }
+    } catch (error: any) {
+      console.error("Stripe connect error:", error);
+      toast.error("Erro ao conectar com Stripe: " + (error.message || "Tente novamente"));
+    } finally {
+      setConnectingStripe(false);
+    }
+  };
 
   const totalPending = payouts
     .filter((p) => p.status === "pending")
@@ -88,6 +131,51 @@ export default function DriverPayouts() {
 
   return (
     <DriverLayout title="Meus Repasses" subtitle="Histórico de repasses recebidos">
+      {/* Stripe Connect Card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Conta de Recebimento
+          </CardTitle>
+          <CardDescription>
+            Conecte sua conta para receber repasses automaticamente
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isStripeConnected ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="font-medium">Conta Stripe conectada</span>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleConnectStripe} disabled={connectingStripe}>
+                {connectingStripe ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                )}
+                Gerenciar conta
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <p className="text-sm text-muted-foreground">
+                Para receber seus repasses, você precisa conectar uma conta bancária via Stripe.
+              </p>
+              <Button onClick={handleConnectStripe} disabled={connectingStripe}>
+                {connectingStripe ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <CreditCard className="h-4 w-4 mr-2" />
+                )}
+                Conectar conta
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 md:grid-cols-2 mb-6">
         <Card>
           <CardContent className="p-6">
