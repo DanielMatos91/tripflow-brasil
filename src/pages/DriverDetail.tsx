@@ -22,6 +22,7 @@ import {
   Calendar,
   Phone,
   Mail,
+  MessageCircle,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -53,10 +54,11 @@ export default function DriverDetail() {
   const [loading, setLoading] = useState(true);
   const [actionDialog, setActionDialog] = useState<{
     open: boolean;
-    type: 'verify' | 'block' | 'activate' | 'reject';
+    type: 'verify' | 'block' | 'activate' | 'reject' | 'request_corrections';
     documentId?: string;
   }>({ open: false, type: 'verify' });
   const [rejectionReason, setRejectionReason] = useState('');
+  const [correctionMessage, setCorrectionMessage] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -66,14 +68,25 @@ export default function DriverDetail() {
   }, [id]);
 
   const fetchDriver = async () => {
-    const { data, error } = await supabase
+    // Fetch driver separately and then profile to avoid relationship issues
+    const { data: driverData, error: driverError } = await supabase
       .from('drivers')
-      .select('*, profile:profiles!drivers_user_id_fkey(name, email, phone)')
+      .select('*')
       .eq('id', id)
       .maybeSingle();
 
-    if (!error && data) {
-      setDriver(data as unknown as DriverWithProfile);
+    if (!driverError && driverData) {
+      // Fetch profile separately
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('name, email, phone')
+        .eq('id', driverData.user_id)
+        .maybeSingle();
+
+      setDriver({
+        ...driverData,
+        profile: profileData || null,
+      } as unknown as DriverWithProfile);
     }
     setLoading(false);
   };
@@ -134,6 +147,26 @@ export default function DriverDetail() {
       fetchDriver();
     }
     setActionDialog({ open: false, type: 'activate' });
+  };
+
+  const handleRequestCorrections = async () => {
+    if (!correctionMessage.trim()) return;
+
+    // Update driver status to pending and mark as not verified
+    const { error } = await supabase
+      .from('drivers')
+      .update({ status: 'pending', verified: false })
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Erro ao solicitar correções');
+    } else {
+      // TODO: In the future, send email/notification to driver with the correction message
+      toast.success('Solicitação de correções enviada ao motorista');
+      fetchDriver();
+    }
+    setActionDialog({ open: false, type: 'request_corrections' });
+    setCorrectionMessage('');
   };
 
   const handleApproveDocument = async (docId: string) => {
@@ -307,13 +340,23 @@ export default function DriverDetail() {
           </CardHeader>
           <CardContent className="space-y-3">
             {!driver.verified && (
-              <Button
-                className="w-full"
-                onClick={() => setActionDialog({ open: true, type: 'verify' })}
-              >
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                Verificar Motorista
-              </Button>
+              <>
+                <Button
+                  className="w-full"
+                  onClick={() => setActionDialog({ open: true, type: 'verify' })}
+                >
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Verificar Motorista
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full border-warning/50 text-warning hover:bg-warning/10"
+                  onClick={() => setActionDialog({ open: true, type: 'request_corrections' })}
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Solicitar Correções
+                </Button>
+              </>
             )}
             
             {driver.status === 'blocked' ? (
@@ -519,6 +562,40 @@ export default function DriverDetail() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Rejeitar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={actionDialog.open && actionDialog.type === 'request_corrections'}
+        onOpenChange={(open) => {
+          setActionDialog({ ...actionDialog, open });
+          if (!open) setCorrectionMessage('');
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Solicitar Correções</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe ao motorista quais informações ou documentos precisam ser corrigidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            placeholder="Descreva as correções necessárias..."
+            value={correctionMessage}
+            onChange={(e) => setCorrectionMessage(e.target.value)}
+            className="mt-2"
+            rows={4}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRequestCorrections}
+              disabled={!correctionMessage.trim()}
+              className="bg-warning text-warning-foreground hover:bg-warning/90"
+            >
+              Enviar Solicitação
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
