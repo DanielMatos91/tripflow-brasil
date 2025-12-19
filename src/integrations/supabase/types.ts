@@ -269,6 +269,7 @@ export type Database = {
           payment_date: string | null
           receipt_url: string | null
           status: Database["public"]["Enums"]["payout_status"]
+          stripe_invoice_id: string | null
           trip_id: string
           updated_at: string
         }
@@ -282,6 +283,7 @@ export type Database = {
           payment_date?: string | null
           receipt_url?: string | null
           status?: Database["public"]["Enums"]["payout_status"]
+          stripe_invoice_id?: string | null
           trip_id: string
           updated_at?: string
         }
@@ -295,6 +297,7 @@ export type Database = {
           payment_date?: string | null
           receipt_url?: string | null
           status?: Database["public"]["Enums"]["payout_status"]
+          stripe_invoice_id?: string | null
           trip_id?: string
           updated_at?: string
         }
