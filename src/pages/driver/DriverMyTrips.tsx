@@ -85,8 +85,10 @@ export default function DriverMyTrips() {
 
   const handleComplete = async (tripId: string) => {
     setActionLoading(tripId);
-    const { data, error } = await supabase.rpc("complete_trip", {
-      _trip_id: tripId,
+    
+    // Call the edge function that handles trip completion + invoice creation
+    const { data, error } = await supabase.functions.invoke("complete-trip-flow", {
+      body: { trip_id: tripId },
     });
 
     if (error) {
@@ -95,18 +97,18 @@ export default function DriverMyTrips() {
         description: "Não foi possível concluir a corrida.",
         variant: "destructive",
       });
+    } else if (data?.error) {
+      toast({
+        title: "Erro",
+        description: data.error,
+        variant: "destructive",
+      });
     } else {
-      const result = data as { success: boolean; error?: string };
-      if (!result.success) {
-        toast({
-          title: "Erro",
-          description: result.error || "Erro desconhecido",
-          variant: "destructive",
-        });
-      } else {
-        toast({ title: "Sucesso", description: "Corrida concluída!" });
-        fetchTrips();
-      }
+      toast({ 
+        title: "Sucesso", 
+        description: data?.message || "Corrida concluída!" 
+      });
+      fetchTrips();
     }
     setActionLoading(null);
   };

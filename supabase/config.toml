@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.financial-reports]
 verify_jwt = false
+
+[functions.stripe-invoice-webhook]
+verify_jwt = false
+
+[functions.complete-trip-flow]
+verify_jwt = false

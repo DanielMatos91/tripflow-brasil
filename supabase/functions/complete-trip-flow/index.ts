@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-INVOICE] ${step}${detailsStr}`);
+  console.log(`[COMPLETE-TRIP-FLOW] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -34,31 +34,71 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Auth error: ${userError.message}`);
-    
-    const { 
-      supplier_id, 
-      trip_id, 
-      amount, 
-      description,
-      due_days = 25 
-    } = await req.json();
+    const user = userData.user;
 
-    logStep("Request data", { supplier_id, trip_id, amount, due_days });
+    const { trip_id } = await req.json();
+    if (!trip_id) throw new Error("trip_id is required");
 
-    // Get supplier info
-    const { data: supplier, error: supplierError } = await supabaseClient
-      .from("suppliers")
-      .select("*")
-      .eq("id", supplier_id)
-      .maybeSingle();
+    logStep("Request data", { trip_id, userId: user?.id });
 
-    if (supplierError || !supplier) {
-      throw new Error("Supplier not found");
+    // Step 1: Complete the trip using the database function
+    const { data: completeResult, error: completeError } = await supabaseClient.rpc(
+      "complete_trip",
+      { _trip_id: trip_id }
+    );
+
+    if (completeError) {
+      throw new Error(`Failed to complete trip: ${completeError.message}`);
     }
 
-    logStep("Supplier found", { name: supplier.name, email: supplier.email });
+    const result = completeResult as { success: boolean; error?: string; payout_amount?: number };
+    if (!result.success) {
+      throw new Error(result.error || "Failed to complete trip");
+    }
 
+    logStep("Trip completed", { payoutAmount: result.payout_amount });
+
+    // Step 2: Fetch trip details to get supplier and pricing info
+    const { data: trip, error: tripError } = await supabaseClient
+      .from("trips")
+      .select("*, supplier:suppliers(*)")
+      .eq("id", trip_id)
+      .maybeSingle();
+
+    if (tripError || !trip) {
+      logStep("Warning: Could not fetch trip details", { error: tripError?.message });
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: "Corrida concluída! (Invoice não criada - fornecedor não encontrado)",
+        payout_amount: result.payout_amount,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Step 3: Check if trip has a supplier - if not, skip invoice creation
+    if (!trip.supplier_id || !trip.supplier) {
+      logStep("No supplier associated with trip, skipping invoice creation");
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: "Corrida concluída! (Sem fornecedor associado)",
+        payout_amount: result.payout_amount,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    logStep("Trip has supplier", { 
+      supplierId: trip.supplier_id, 
+      supplierName: trip.supplier.name,
+      priceCustomer: trip.price_customer 
+    });
+
+    // Step 4: Create invoice for the supplier
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const supplier = trip.supplier;
 
     // Get or create Stripe customer for supplier
     let customerId = supplier.stripe_customer_id;
@@ -79,7 +119,7 @@ serve(async (req) => {
       await supabaseClient
         .from("suppliers")
         .update({ stripe_customer_id: customerId })
-        .eq("id", supplier_id);
+        .eq("id", supplier.id);
 
       logStep("Stripe customer created", { customerId });
     }
@@ -88,25 +128,23 @@ serve(async (req) => {
     const invoice = await stripe.invoices.create({
       customer: customerId,
       collection_method: "send_invoice",
-      days_until_due: due_days,
+      days_until_due: 25,
       metadata: {
-        trip_id: trip_id || "",
-        supplier_id: supplier_id,
+        trip_id: trip_id,
+        supplier_id: supplier.id,
       },
     });
 
     logStep("Invoice created", { invoiceId: invoice.id });
 
-    // Add invoice item
+    // Add invoice item - charge the customer price
     await stripe.invoiceItems.create({
       customer: customerId,
       invoice: invoice.id,
-      amount: Math.round(amount * 100), // Convert to cents
+      amount: Math.round(trip.price_customer * 100), // Convert to cents
       currency: "brl",
-      description: description || `Serviço de transporte - ${supplier.code}`,
+      description: `Serviço de transporte - ${trip.origin_text} → ${trip.destination_text}`,
     });
-
-    logStep("Invoice item added");
 
     // Finalize and send invoice
     const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
@@ -117,35 +155,32 @@ serve(async (req) => {
       invoiceUrl: finalizedInvoice.hosted_invoice_url 
     });
 
-    // Update payment record if trip_id provided
-    if (trip_id) {
-      await supabaseClient
-        .from("payments")
-        .upsert({
-          trip_id: trip_id,
-          amount: amount,
-          method: "PIX",
-          gateway: "stripe",
-          gateway_payment_id: finalizedInvoice.id,
-          status: "pending",
-        }, { onConflict: "trip_id" });
+    // Step 5: Update payment record
+    await supabaseClient
+      .from("payments")
+      .upsert({
+        trip_id: trip_id,
+        amount: trip.price_customer,
+        method: "PIX",
+        gateway: "stripe",
+        gateway_payment_id: finalizedInvoice.id,
+        status: "pending",
+      }, { onConflict: "trip_id" });
 
-      logStep("Payment record updated");
+    // Step 6: Update payout with invoice ID
+    await supabaseClient
+      .from("payouts")
+      .update({ stripe_invoice_id: finalizedInvoice.id })
+      .eq("trip_id", trip_id);
 
-      // Update payout with invoice ID
-      await supabaseClient
-        .from("payouts")
-        .update({ stripe_invoice_id: finalizedInvoice.id })
-        .eq("trip_id", trip_id);
-
-      logStep("Payout updated with invoice ID");
-    }
+    logStep("Records updated successfully");
 
     return new Response(JSON.stringify({ 
       success: true,
+      message: "Corrida concluída e fatura enviada ao fornecedor!",
+      payout_amount: result.payout_amount,
       invoice_id: finalizedInvoice.id,
       invoice_url: finalizedInvoice.hosted_invoice_url,
-      invoice_pdf: finalizedInvoice.invoice_pdf,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
