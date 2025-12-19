@@ -19,9 +19,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-interface PayoutWithRelations extends Omit<Payout, 'driver' | 'fleet'> {
+interface PayoutWithRelations extends Omit<Payout, 'driver' | 'fleet' | 'trip'> {
   driver?: { id: string; profile?: { name: string } | null } | null;
   fleet?: Fleet | null;
+  trip?: { 
+    id: string; 
+    origin_text: string; 
+    destination_text: string;
+    supplier?: { name: string; code: string } | null 
+  } | null;
 }
 
 export default function Payouts() {
@@ -49,7 +55,7 @@ export default function Payouts() {
     let query = supabase
       .from('payouts')
       .select(
-        '*, driver:drivers(id, user_id), fleet:fleets(*)',
+        '*, driver:drivers(id, user_id, profile:profiles(name)), fleet:fleets(*), trip:trips(id, origin_text, destination_text, supplier:suppliers(name, code))',
         { count: 'exact' }
       );
 
@@ -175,9 +181,32 @@ export default function Payouts() {
       key: 'trip_id',
       header: 'Corrida',
       render: (payout: PayoutWithRelations) => (
-        <span className="font-mono text-sm text-muted-foreground">
-          #{payout.trip_id.slice(0, 8)}
-        </span>
+        <div>
+          <span className="font-mono text-sm text-muted-foreground">
+            #{payout.trip_id.slice(0, 8)}
+          </span>
+          {payout.trip && (
+            <p className="text-xs text-muted-foreground truncate max-w-[150px]">
+              {payout.trip.origin_text} → {payout.trip.destination_text}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'supplier',
+      header: 'Fornecedor',
+      render: (payout: PayoutWithRelations) => (
+        <div>
+          {payout.trip?.supplier ? (
+            <>
+              <p className="font-medium text-sm">{payout.trip.supplier.name}</p>
+              <span className="text-xs text-muted-foreground">{payout.trip.supplier.code}</span>
+            </>
+          ) : (
+            <span className="text-sm text-muted-foreground">-</span>
+          )}
+        </div>
       ),
     },
     {
