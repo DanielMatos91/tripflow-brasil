@@ -16,7 +16,7 @@ import Drivers from "./pages/Drivers";
 import DriverDetail from "./pages/DriverDetail";
 import Fleets from "./pages/Fleets";
 import FleetDetail from "./pages/FleetDetail";
-import Documents from "./pages/Documents";
+
 import Payouts from "./pages/Payouts";
 import AuditLogs from "./pages/AuditLogs";
 import Users from "./pages/Users";
@@ -63,7 +63,7 @@ const AppRoutes = () => (
     <Route path="/admin/drivers/:id" element={<RoleRoute allow={["ADMIN", "STAFF"]}><DriverDetail /></RoleRoute>} />
     <Route path="/admin/fleets" element={<RoleRoute allow={["ADMIN", "STAFF"]}><Fleets /></RoleRoute>} />
     <Route path="/admin/fleets/:id" element={<RoleRoute allow={["ADMIN", "STAFF"]}><FleetDetail /></RoleRoute>} />
-    <Route path="/admin/documents" element={<RoleRoute allow={["ADMIN", "STAFF"]}><Documents /></RoleRoute>} />
+    
     <Route path="/admin/payouts" element={<RoleRoute allow={["ADMIN", "STAFF"]}><Payouts /></RoleRoute>} />
     <Route path="/admin/audit" element={<RoleRoute allow={["ADMIN", "STAFF"]}><AuditLogs /></RoleRoute>} />
     <Route path="/admin/users" element={<RoleRoute allow={["ADMIN"]}><Users /></RoleRoute>} />
