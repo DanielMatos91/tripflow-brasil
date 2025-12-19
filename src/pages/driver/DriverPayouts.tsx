@@ -31,7 +31,7 @@ const statusColors: Record<string, string> = {
 
 export default function DriverPayouts() {
   const { driver, loading: driverLoading, isStripeConnected, refetch } = useDriverProfile();
-  const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectingStripe, setConnectingStripe] = useState(false);
 
@@ -44,12 +44,12 @@ export default function DriverPayouts() {
     const fetchPayouts = async () => {
       const { data, error } = await supabase
         .from("payouts")
-        .select("*")
+        .select("*, trip:trips(id, origin_text, destination_text, pickup_datetime)")
         .eq("driver_id", driver.id)
         .order("created_at", { ascending: false });
 
       if (!error && data) {
-        setPayouts(data as Payout[]);
+        setPayouts(data);
       }
       setLoading(false);
     };
@@ -213,10 +213,10 @@ export default function DriverPayouts() {
             <TableHeader>
               <TableRow>
                 <TableHead>Data</TableHead>
+                <TableHead>Corrida</TableHead>
                 <TableHead>Valor</TableHead>
-                <TableHead>Método</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Data Pagamento</TableHead>
+                <TableHead>Pago em</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -227,10 +227,23 @@ export default function DriverPayouts() {
                       locale: ptBR,
                     })}
                   </TableCell>
+                  <TableCell>
+                    {payout.trip ? (
+                      <div>
+                        <p className="text-sm font-medium truncate max-w-[200px]">
+                          {payout.trip.origin_text}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                          → {payout.trip.destination_text}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">
                     R$ {Number(payout.amount).toFixed(2)}
                   </TableCell>
-                  <TableCell>{payout.method || "-"}</TableCell>
                   <TableCell>
                     <Badge className={statusColors[payout.status]}>
                       {statusLabels[payout.status]}
